@@ -139,7 +139,7 @@ def build_dispatcher(
         if not accounts:
             await message.answer("список " + b("пуст"), parse_mode=ParseMode.HTML)
             return
-        body = "\n".join(f"• <b>@{a.username}</b>" for a in accounts)
+        body = "\n".join(f"• {b('@' + a.username)}" for a in accounts)
         await message.answer(
             "отслеживаемые аккаунты:\n" + body,
             parse_mode=ParseMode.HTML,

@@ -81,6 +81,7 @@ class Poller:
                 await self._db.set_user_id(account.username, resolved)
                 user_id = resolved
 
+            is_first_poll = not account.last_tweet_id
             highest_seen = account.last_tweet_id
             try:
                 async for tweet in self._twitter.fetch_new(
@@ -89,15 +90,24 @@ class Poller:
                     last_seen_id=account.last_tweet_id,
                     limit=self._config.tweets_per_poll,
                 ):
-                    await self._send(tweet.username, tweet.text, tweet.url)
+                    if not is_first_poll:
+                        await self._send(tweet.username, tweet.text, tweet.url)
                     if highest_seen is None or int(tweet.id) > int(highest_seen):
                         highest_seen = tweet.id
             except Exception:  # noqa: BLE001
                 log.exception("fetch failed for @%s", account.username)
                 continue
 
+            if is_first_poll and highest_seen is None:
+                highest_seen = "0"
             if highest_seen and highest_seen != account.last_tweet_id:
                 await self._db.set_last_tweet_id(account.username, highest_seen)
+            if is_first_poll:
+                log.info(
+                    "@%s seeded at last_tweet_id=%s (no historical posts forwarded)",
+                    account.username,
+                    highest_seen,
+                )
 
     async def _send(self, username: str, text: str, url: str) -> None:
         try:
