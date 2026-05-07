@@ -34,6 +34,7 @@ async def _amain(config: Config) -> None:
             password=config.x_password,
             email=config.x_email,
             email_password=config.x_email_password,
+            cookies=config.x_cookies,
         )
         try:
             await twitter.start()
