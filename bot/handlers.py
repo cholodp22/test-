@@ -18,14 +18,19 @@ from .twitter import TwitterClient
 log = logging.getLogger(__name__)
 
 
-HELP = (
-    "минималистичный бот для пересылки постов из x.\n\n"
-    "команды:\n"
-    "• /exeduty — заступить / окончить смену\n"
-    "• /add &lt;username&gt; — добавить аккаунт x (админ)\n"
-    "• /remove &lt;username&gt; — удалить аккаунт x (админ)\n"
-    "• /list — список отслеживаемых (админ)\n"
+START_TEXT = (
+    "🤡 <b>slaveEXE</b> — специально разработанный бот для оперативного ведения "
+    "телеграм-каналов сетки .exe\n\n"
+    "<b>команды:</b>\n"
+    ". /exeduty — заступить / окончить смену [отслеживание часов]\n"
+    ". /add &lt;username&gt; — добавить отслеживаемый аккаунт [для админа]\n"
+    ". /remove &lt;username&gt; — удалить отслеживание [для админа]\n"
+    ". /list — список отслеживаемых аккаунтов [для админа]\n\n"
+    "<b>prescription:</b>\n"
+    ". добавить/удалить новый отслеживаемый аккаунт — обращайся к своему начальнику\n"
 )
+
+HELP = START_TEXT
 
 
 def _display_name(message: Message) -> str:
@@ -54,10 +59,7 @@ def build_dispatcher(
 
     @dp.message(CommandStart())
     async def on_start(message: Message) -> None:
-        await message.answer(
-            "привет.\nя пересылаю " + b("новости из x") + " в эту беседу.\n\n" + HELP,
-            parse_mode=ParseMode.HTML,
-        )
+        await message.answer(START_TEXT, parse_mode=ParseMode.HTML)
 
     @dp.message(Command("help"))
     async def on_help(message: Message) -> None:
