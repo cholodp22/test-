@@ -26,14 +26,16 @@ class TwitterClient:
         accounts_db: str,
         login: str,
         password: str,
-        email: str,
-        email_password: str,
+        email: str = "",
+        email_password: str = "",
+        cookies: str = "",
     ) -> None:
         self._accounts_db = accounts_db
         self._login = login
         self._password = password
         self._email = email
         self._email_password = email_password
+        self._cookies = cookies
         self._api: API | None = None
 
     @property
@@ -45,14 +47,31 @@ class TwitterClient:
     async def start(self) -> None:
         set_log_level("WARNING")
         self._api = API(self._accounts_db)
+
+        kwargs: dict[str, str] = {}
+        if self._cookies:
+            kwargs["cookies"] = self._cookies
+
         await self._api.pool.add_account(
             self._login,
             self._password,
-            self._email,
-            self._email_password,
+            self._email or f"{self._login}@example.invalid",
+            self._email_password or "unused",
+            **kwargs,
         )
-        await self._api.pool.login_all()
-        log.info("twscrape pool ready")
+
+        if self._cookies:
+            log.info("twscrape pool ready (cookie-based auth)")
+            return
+
+        try:
+            await self._api.pool.login_all()
+        except Exception:  # noqa: BLE001
+            log.exception(
+                "twscrape login failed — provide X_COOKIES or X_EMAIL/X_EMAIL_PASSWORD"
+            )
+            raise
+        log.info("twscrape pool ready (password-based auth)")
 
     async def resolve_user_id(self, username: str) -> str | None:
         username = username.lstrip("@")

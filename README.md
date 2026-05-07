@@ -42,9 +42,12 @@ python -m bot
 - `ADMIN_IDS` — список user-id через запятую, кому разрешены `/add /remove /list`
   (если не задан — доступно всем)
 
-для пересылки твитов нужны креды x:
+для пересылки твитов нужны креды x — **достаточно одного из путей**:
 
-- `X_LOGIN`, `X_PASSWORD`, `X_EMAIL`, `X_EMAIL_PASSWORD`
+- путь **a** (email-based): `X_LOGIN`, `X_PASSWORD`, `X_EMAIL`, `X_EMAIL_PASSWORD`
+- путь **b** (cookies-based): `X_LOGIN`, `X_PASSWORD`, `X_COOKIES`
+  - формат cookies: `auth_token=...; ct0=...`
+  - взять в dev tools → application → cookies → `x.com` после ручного логина
 
 без них бот запустится, но будет работать только `/exeduty` и команды управления.
 

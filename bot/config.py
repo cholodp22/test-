@@ -53,6 +53,7 @@ class Config:
     x_password: str = ""
     x_email: str = ""
     x_email_password: str = ""
+    x_cookies: str = ""
 
     poll_interval_seconds: int = 120
     tweets_per_poll: int = 20
@@ -62,9 +63,11 @@ class Config:
 
     @property
     def has_x_credentials(self) -> bool:
-        return all(
-            [self.x_login, self.x_password, self.x_email, self.x_email_password]
-        )
+        if not (self.x_login and self.x_password):
+            return False
+        if self.x_cookies:
+            return True
+        return bool(self.x_email and self.x_email_password)
 
 
 def load_config() -> Config:
@@ -76,6 +79,7 @@ def load_config() -> Config:
         x_password=os.getenv("X_PASSWORD", ""),
         x_email=os.getenv("X_EMAIL", "").strip(),
         x_email_password=os.getenv("X_EMAIL_PASSWORD", ""),
+        x_cookies=os.getenv("X_COOKIES", "").strip(),
         poll_interval_seconds=max(30, _int("POLL_INTERVAL_SECONDS", 120)),
         tweets_per_poll=max(1, _int("TWEETS_PER_POLL", 20)),
         db_path=os.getenv("DB_PATH", "bot.db").strip() or "bot.db",
