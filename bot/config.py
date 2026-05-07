@@ -55,7 +55,7 @@ class Config:
     x_email_password: str = ""
     x_cookies: str = ""
 
-    poll_interval_seconds: int = 120
+    poll_interval_seconds: int = 60
     tweets_per_poll: int = 20
 
     db_path: str = "bot.db"
