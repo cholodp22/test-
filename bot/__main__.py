@@ -28,20 +28,15 @@ async def _amain(config: Config) -> None:
     twitter: TwitterClient | None = None
     poller: Poller | None = None
     if config.has_x_credentials:
-        twitter = TwitterClient(
-            accounts_db=config.twscrape_db_path,
-            login=config.x_login,
-            password=config.x_password,
-            email=config.x_email,
-            email_password=config.x_email_password,
-            cookies=config.x_cookies,
-        )
+        twitter = TwitterClient(cookies=config.x_cookies)
         try:
             await twitter.start()
             poller = Poller(bot=bot, db=db, twitter=twitter, config=config)
             poller.start()
         except Exception:  # noqa: BLE001
             logging.exception("twitter init failed — continuing without poller")
+            if twitter is not None:
+                await twitter.stop()
             twitter = None
             poller = None
     else:
@@ -56,6 +51,8 @@ async def _amain(config: Config) -> None:
     finally:
         if poller is not None:
             await poller.stop()
+        if twitter is not None:
+            await twitter.stop()
         await bot.session.close()
 
 

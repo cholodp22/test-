@@ -63,11 +63,7 @@ class Config:
 
     @property
     def has_x_credentials(self) -> bool:
-        if not (self.x_login and self.x_password):
-            return False
-        if self.x_cookies:
-            return True
-        return bool(self.x_email and self.x_email_password)
+        return bool(self.x_cookies)
 
 
 def load_config() -> Config:
