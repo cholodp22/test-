@@ -13,13 +13,16 @@
 
 ## команды
 
+бот реагирует **только** в одном заданном чате (`CHAT_ID`). в любом другом
+чате/личке — полное молчание.
+
 | команда | описание |
 |---|---|
 | `/start`, `/help` | справка |
 | `/exeduty` | заступить / окончить смену |
-| `/add <username>` | добавить аккаунт x (админ) |
-| `/remove <username>` | удалить аккаунт x (админ) |
-| `/list` | список отслеживаемых (админ) |
+| `/add <username>` | добавить аккаунт x |
+| `/remove <username>` | удалить аккаунт x |
+| `/list` | список отслеживаемых |
 | `/chatid` | id текущего чата |
 
 ## установка
@@ -38,16 +41,15 @@ python -m bot
 см. `.env.example`. обязательные:
 
 - `BOT_TOKEN` — токен от [@botfather](https://t.me/botfather)
-- `CHAT_ID` — id беседы, куда слать твиты (можно узнать командой `/chatid`)
-- `ADMIN_IDS` — список user-id через запятую, кому разрешены `/add /remove /list`
-  (если не задан — доступно всем)
+- `CHAT_ID` — id единственного чата, где бот реагирует и куда шлёт твиты
+  (узнать: добавить бота в чат, ненадолго снять `CHAT_ID`/перевести на любой
+  тестовый id, написать `/chatid` — но проще через [@userinfobot](https://t.me/userinfobot)
+  или forward сообщения в [@JsonDumpBot](https://t.me/JsonDumpBot))
 
-для пересылки твитов нужны креды x — **достаточно одного из путей**:
+для пересылки твитов нужны cookies технического x-аккаунта:
 
-- путь **a** (email-based): `X_LOGIN`, `X_PASSWORD`, `X_EMAIL`, `X_EMAIL_PASSWORD`
-- путь **b** (cookies-based): `X_LOGIN`, `X_PASSWORD`, `X_COOKIES`
-  - формат cookies: `auth_token=...; ct0=...`
-  - взять в dev tools → application → cookies → `x.com` после ручного логина
+- `X_COOKIES` — формат `auth_token=...; ct0=...`,
+  берётся в dev tools → application → cookies → `x.com` после ручного логина
 
 без них бот запустится, но будет работать только `/exeduty` и команды управления.
 

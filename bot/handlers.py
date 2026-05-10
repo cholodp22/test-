@@ -6,7 +6,7 @@ import logging
 import time
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.enums import ChatType, ParseMode
+from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
@@ -23,9 +23,9 @@ START_TEXT = (
     "телеграм-каналов сетки .exe\n\n"
     "<b>команды:</b>\n"
     ". /exeduty — заступить / окончить смену [отслеживание часов]\n"
-    ". /add &lt;username&gt; — добавить отслеживаемый аккаунт [для админа]\n"
-    ". /remove &lt;username&gt; — удалить отслеживание [для админа]\n"
-    ". /list — список отслеживаемых аккаунтов [для админа]\n\n"
+    ". /add &lt;username&gt; — добавить отслеживаемый аккаунт\n"
+    ". /remove &lt;username&gt; — удалить отслеживание\n"
+    ". /list — список отслеживаемых аккаунтов\n\n"
     "<b>prescription:</b>\n"
     ". добавить/удалить новый отслеживаемый аккаунт — обращайся к своему начальнику\n"
 )
@@ -42,13 +42,6 @@ def _display_name(message: Message) -> str:
     return (user.full_name or "unknown").lower()
 
 
-def _is_admin(message: Message, config: Config) -> bool:
-    if not config.admin_ids:
-        return True
-    user = message.from_user
-    return user is not None and user.id in config.admin_ids
-
-
 def build_dispatcher(
     bot: Bot,
     db: Database,
@@ -56,6 +49,8 @@ def build_dispatcher(
     config: Config,
 ) -> Dispatcher:
     dp = Dispatcher()
+    # bot reacts ONLY in the configured chat — 0 reaction anywhere else.
+    dp.message.filter(F.chat.id == config.chat_id)
 
     @dp.message(CommandStart())
     async def on_start(message: Message) -> None:
@@ -85,8 +80,6 @@ def build_dispatcher(
 
     @dp.message(Command("add"))
     async def on_add(message: Message) -> None:
-        if not _is_admin(message, config):
-            return
         text = (message.text or "").split(maxsplit=1)
         if len(text) < 2 or not text[1].strip():
             await message.answer(
@@ -110,8 +103,6 @@ def build_dispatcher(
 
     @dp.message(Command("remove"))
     async def on_remove(message: Message) -> None:
-        if not _is_admin(message, config):
-            return
         text = (message.text or "").split(maxsplit=1)
         if len(text) < 2 or not text[1].strip():
             await message.answer(
@@ -135,8 +126,6 @@ def build_dispatcher(
 
     @dp.message(Command("list"))
     async def on_list(message: Message) -> None:
-        if not _is_admin(message, config):
-            return
         accounts = await db.list_accounts()
         if not accounts:
             await message.answer("список " + b("пуст"), parse_mode=ParseMode.HTML)
@@ -153,10 +142,5 @@ def build_dispatcher(
             "chat id: " + b(str(message.chat.id)),
             parse_mode=ParseMode.HTML,
         )
-
-    @dp.message(F.chat.type == ChatType.PRIVATE)
-    async def on_unknown_private(message: Message) -> None:
-        if (message.text or "").startswith("/"):
-            await message.answer(HELP, parse_mode=ParseMode.HTML)
 
     return dp

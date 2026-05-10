@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
@@ -27,27 +27,10 @@ def _required(name: str) -> str:
     return value
 
 
-def _admin_ids() -> set[int]:
-    raw = os.getenv("ADMIN_IDS", "").strip()
-    if not raw:
-        return set()
-    out: set[int] = set()
-    for chunk in raw.replace(";", ",").split(","):
-        chunk = chunk.strip()
-        if not chunk:
-            continue
-        try:
-            out.add(int(chunk))
-        except ValueError as exc:
-            raise ValueError(f"ADMIN_IDS must contain integers, got {chunk!r}") from exc
-    return out
-
-
 @dataclass(frozen=True)
 class Config:
     bot_token: str
     chat_id: int
-    admin_ids: set[int] = field(default_factory=set)
 
     x_login: str = ""
     x_password: str = ""
@@ -70,7 +53,6 @@ def load_config() -> Config:
     return Config(
         bot_token=_required("BOT_TOKEN"),
         chat_id=int(_required("CHAT_ID")),
-        admin_ids=_admin_ids(),
         x_login=os.getenv("X_LOGIN", "").strip(),
         x_password=os.getenv("X_PASSWORD", ""),
         x_email=os.getenv("X_EMAIL", "").strip(),
