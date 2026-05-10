@@ -1,0 +1,79 @@
+name: bot
+
+on:
+  # cron — github actions minimum interval is 5 minutes
+  schedule:
+    - cron: "*/5 * * * *"
+  # manual: poll / list / add @user / remove @user
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "what to do"
+        type: choice
+        required: true
+        default: poll
+        options:
+          - poll
+          - list
+          - add
+          - remove
+      username:
+        description: "username for add/remove (with or without @)"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+# avoid overlapping runs (each cycle takes ~1 min for 27 accounts)
+concurrency:
+  group: bot-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: install deps
+        run: pip install --no-cache-dir -r requirements.txt
+
+      - name: run bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          X_COOKIES: ${{ secrets.X_COOKIES }}
+          POLL_INTERVAL_SECONDS: "180"
+          TWEETS_PER_POLL: "20"
+          REQUEST_DELAY_SECONDS: "2.5"
+          ACTION: ${{ github.event.inputs.action || 'poll' }}
+          USERNAME: ${{ github.event.inputs.username || '' }}
+        run: |
+          if [ -n "$USERNAME" ]; then
+            python -m bot.cron --action "$ACTION" --username "$USERNAME"
+          else
+            python -m bot.cron --action "$ACTION"
+          fi
+
+      - name: commit state if changed
+        run: |
+          if [ -n "$(git status --porcelain state/)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add state/
+            git commit -m "bot: update state [skip ci]"
+            # use --force-with-lease to avoid stomping concurrent edits
+            git push --force-with-lease
+          else
+            echo "no state changes — skipping commit"
+          fi

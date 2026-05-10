@@ -71,7 +71,14 @@ class Poller:
         if not accounts:
             return
 
-        for account in accounts:
+        delay = self._config.request_delay_seconds
+        for index, account in enumerate(accounts):
+            if index > 0 and delay > 0:
+                try:
+                    await asyncio.wait_for(self._stop.wait(), timeout=delay)
+                    return
+                except asyncio.TimeoutError:
+                    pass
             user_id = account.user_id
             if user_id is None:
                 resolved = await self._twitter.resolve_user_id(account.username)
