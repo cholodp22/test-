@@ -25,6 +25,7 @@ on:
 
 permissions:
   contents: write
+  actions: write  # needed for self-reschedule via workflow_dispatch
 
 # avoid overlapping runs (each cycle takes ~1 min for 27 accounts)
 concurrency:
@@ -76,3 +77,18 @@ jobs:
           else
             echo "no state changes — skipping commit"
           fi
+
+      - name: self-reschedule (bootstrap chain if github's lazy scheduler stalls)
+        if: ${{ (github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'poll' || github.event.inputs.action == '')) }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # github's `schedule` event can be hours-delayed for new workflows on freshly-changed default branches.
+          # this step keeps a self-sustaining chain alive: sleep ~4.5 min, then dispatch self for the next ~5-min tick.
+          # if a run ever fails before reaching this step, the chain breaks; the cron schedule above is the safety net.
+          sleep 270
+          curl -sS -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/bot.yml/dispatches" \
+            -d '{"ref":"dev","inputs":{"action":"poll","username":""}}'
